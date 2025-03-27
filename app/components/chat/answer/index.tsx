@@ -1,7 +1,7 @@
 'use client'
 import type { FC } from 'react'
-import React from 'react'
-import { HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/24/outline'
+import React, { useState, useMemo } from 'react'
+import { HandThumbDownIcon, HandThumbUpIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 import LoadingAnim from '../loading-anim'
 import type { FeedbackFunc } from '../type'
@@ -14,6 +14,50 @@ import Tooltip from '@/app/components/base/tooltip'
 import WorkflowProcess from '@/app/components/workflow/workflow-process'
 import { Markdown } from '@/app/components/base/markdown'
 import type { Emoji } from '@/types/tools'
+
+
+// 解析思考内容的辅助函数
+const parseThinkingContent = (content: string) => {
+  const thinkRegex = /<think>([\s\S]*?)<\/think>/g
+  const matches = Array.from(content.matchAll(thinkRegex))
+
+  // 提取所有思考内容
+  const thinkingParts = matches.map(match => match[1].trim())
+
+  // 移除所有思考标签，得到清理后的内容
+  const cleanContent = content.replace(thinkRegex, '')
+
+  return {
+    hasThinking: thinkingParts.length > 0,
+    thinking: thinkingParts.join('\n\n'),
+    content: cleanContent
+  }
+}
+
+
+// 思考内容的可折叠组件
+const ThinkingContainer: FC<{ content: string }> = ({ content }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="mb-3 border-b border-gray-200 pb-2">
+      <div
+        className="flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="text-xs font-medium mr-1">思考过程</span>
+        {isOpen ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
+      </div>
+
+      {isOpen && (
+        <div className="mb-2 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+          <Markdown content={content} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 const OperationBtn = ({ innerContent, onClick, className }: { innerContent: React.ReactNode; onClick?: () => void; className?: string }) => (
   <div
@@ -74,6 +118,12 @@ const Answer: FC<IAnswerProps> = ({
   const isAgentMode = !!agent_thoughts && agent_thoughts.length > 0
 
   const { t } = useTranslation()
+
+  // 使用 useMemo 解析内容，提取思考部分
+  const parsedContent = useMemo(() => {
+    if (!content) return { hasThinking: false, thinking: '', content: '' }
+    return parseThinkingContent(content)
+  }, [content])
 
   /**
  * Render feedback results (distinguish between users and administrators)
@@ -165,6 +215,7 @@ const Answer: FC<IAnswerProps> = ({
     </div>
   )
 
+// 修复Answer组件的return部分
   return (
     <div key={id}>
       <div className='flex items-start'>
@@ -179,7 +230,7 @@ const Answer: FC<IAnswerProps> = ({
           <div className={`${s.answer} relative text-sm text-gray-900`}>
             <div className={`ml-2 py-3 px-4 bg-gray-100 rounded-tr-2xl rounded-b-2xl ${workflowProcess && 'min-w-[480px]'}`}>
               {workflowProcess && (
-                <WorkflowProcess data={workflowProcess} hideInfo />
+                <WorkflowProcess data={workflowProcess as WorkflowProcess} hideInfo />
               )}
               {(isResponding && (isAgentMode ? (!content && (agent_thoughts || []).filter(item => !!item.thought || !!item.tool).length === 0) : !content))
                 ? (
@@ -190,12 +241,16 @@ const Answer: FC<IAnswerProps> = ({
                 : (isAgentMode
                   ? agentModeAnswer
                   : (
-                    <Markdown content={content} />
+                    <>
+                      {parsedContent.hasThinking && (
+                        <ThinkingContainer content={parsedContent.thinking} />
+                      )}
+                      <Markdown content={parsedContent.content} />
+                    </>
                   ))}
             </div>
             <div className='absolute top-[-14px] right-[-14px] flex flex-row justify-end gap-1'>
               {!feedbackDisabled && !item.feedbackDisabled && renderItemOperation()}
-              {/* User feedback must be displayed */}
               {!feedbackDisabled && renderFeedbackRating(feedback?.rating)}
             </div>
           </div>

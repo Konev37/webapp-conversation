@@ -59,6 +59,13 @@ docker build . -t <DOCKER_HUB_REPO>/webapp-conversation:latest
 docker run -p 3000:3000 <DOCKER_HUB_REPO>/webapp-conversation:latest
 ```
 
+例如：
+
+```
+docker build . -t next-test/webapp-conversation:latest
+docker run --name next-test --restart unless-stopped -p 3000:3000 next-test/webapp-conversation:latest 
+```
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Learn More
