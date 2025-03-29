@@ -10,7 +10,15 @@ import Toast from '@/app/components/base/toast'
 import Sidebar from '@/app/components/sidebar'
 import ConfigSence from '@/app/components/config-scence'
 import Header from '@/app/components/header'
-import { fetchAppParams, fetchChatList, fetchConversations, generationConversationName, sendChatMessage, updateFeedback } from '@/service'
+import {
+  deleteConversation,
+  fetchAppParams,
+  fetchChatList,
+  fetchConversations,
+  generationConversationName,
+  sendChatMessage,
+  updateFeedback,
+} from '@/service'
 import type { ChatItem, ConversationItem, Feedbacktype, PromptConfig, VisionFile, VisionSettings } from '@/types/app'
 import { Resolution, TransferMethod, WorkflowRunningStatus } from '@/types/app'
 import Chat from '@/app/components/chat'
@@ -326,6 +334,48 @@ const Main: FC<IMainProps> = () => {
     setChatList(newListWithAnswer)
   }
 
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      // 发送删除请求到后端API
+      await deleteConversation(id)
+
+      // 从列表中移除被删除的对话
+      const newList = conversationList.filter(item => item.id !== id)
+
+      // 如果删除的是当前正在查看的对话，则切换到其他对话
+      if (id === currConversationId) {
+        // 先切换到新对话，再设置列表
+        if (newList.length > 0) {
+          handleConversationIdChange(newList[0].id)
+          setConversationList(newList)
+        }
+        else {
+          handleConversationIdChange('-1') // 先创建新对话
+          // 创建新对话后再手动刷新一次会话列表
+          setTimeout(() => {
+            setConversationList([
+              {
+                id: '-1',
+                name: t('app.chat.newChatDefaultName'),
+                inputs: newConversationInputs,
+                introduction: conversationIntroduction,
+              },
+            ])
+          }, 0)
+        }
+      }
+      else {
+        // 如果删除的不是当前对话，直接更新列表
+        setConversationList(newList)
+      }
+
+      notify({ type: 'success', message: t('common.api.success') })
+    }
+    catch (error) {
+      notify({ type: 'error', message: t('common.api.error') })
+    }
+  }
+
   const handleSend = async (message: string, files?: VisionFile[]) => {
     if (isResponding) {
       notify({ type: 'info', message: t('app.errorMessage.waitForResponse') })
@@ -608,6 +658,7 @@ const Main: FC<IMainProps> = () => {
         onCurrentIdChange={handleConversationIdChange}
         currentId={currConversationId}
         copyRight={APP_INFO.copyright || APP_INFO.title}
+        onDelete={handleDeleteConversation}
       />
     )
   }

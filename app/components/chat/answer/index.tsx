@@ -215,7 +215,9 @@ const Answer: FC<IAnswerProps> = ({
     </div>
   )
 
-// 修复Answer组件的return部分
+  const [showWorkflow, setShowWorkflow] = useState(true);   // 是否显示工作流
+
+  // Answer组件的return部分
   return (
     <div key={id}>
       <div className='flex items-start'>
@@ -227,9 +229,9 @@ const Answer: FC<IAnswerProps> = ({
           }
         </div>
         <div className={`${s.answerWrap}`}>
-          <div className={`${s.answer} relative text-sm text-gray-900`}>
-            <div className={`ml-2 py-3 px-4 bg-gray-100 rounded-tr-2xl rounded-b-2xl ${workflowProcess && 'min-w-[480px]'}`}>
-              {workflowProcess && (
+          <div className={`${s.answer} relative text-xxs text-gray-900`}>
+            <div className={`ml-2 py-3 px-4 bg-gray-100 rounded-tr-2xl rounded-b-2xl ${workflowProcess && 'min-w-[240px]'}`}>
+              {showWorkflow && workflowProcess && (
                 <WorkflowProcess data={workflowProcess as WorkflowProcess} hideInfo />
               )}
               {(isResponding && (isAgentMode ? (!content && (agent_thoughts || []).filter(item => !!item.thought || !!item.tool).length === 0) : !content))

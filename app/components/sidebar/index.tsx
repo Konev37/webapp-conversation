@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ChatBubbleOvalLeftEllipsisIcon,
   PencilSquareIcon,
+  TrashIcon, // 添加删除图标
 } from '@heroicons/react/24/outline'
 import { ChatBubbleOvalLeftEllipsisIcon as ChatBubbleOvalLeftEllipsisSolidIcon } from '@heroicons/react/24/solid'
 import Button from '@/app/components/base/button'
@@ -21,6 +22,7 @@ export type ISidebarProps = {
   currentId: string
   onCurrentIdChange: (id: string) => void
   list: ConversationItem[]
+  onDelete: (id: string) => void // 添加删除对话的回调函数
 }
 
 const Sidebar: FC<ISidebarProps> = ({
@@ -28,6 +30,7 @@ const Sidebar: FC<ISidebarProps> = ({
   currentId,
   onCurrentIdChange,
   list,
+  onDelete,
 }) => {
   const { t } = useTranslation()
   return (
@@ -57,26 +60,32 @@ const Sidebar: FC<ISidebarProps> = ({
                 isCurrent
                   ? 'bg-primary-50 text-primary-600'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-700',
-                'group flex items-center rounded-md px-2 py-2 text-sm font-medium cursor-pointer',
+                'group flex items-center justify-between rounded-md px-2 py-2 text-sm font-medium cursor-pointer',
               )}
             >
-              <ItemIcon
-                className={classNames(
-                  isCurrent
-                    ? 'text-primary-600'
-                    : 'text-gray-400 group-hover:text-gray-500',
-                  'mr-3 h-5 w-5 flex-shrink-0',
-                )}
-                aria-hidden="true"
+              <div className="flex items-center overflow-hidden">
+                <ItemIcon
+                  className={classNames(
+                    isCurrent
+                      ? 'text-primary-600'
+                      : 'text-gray-400 group-hover:text-gray-500',
+                    'mr-3 h-5 w-5 flex-shrink-0',
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="truncate">{item.name}</span>
+              </div>
+              <TrashIcon
+                className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                onClick={(e) => {
+                  e.stopPropagation() // 阻止事件冒泡
+                  onDelete(item.id)
+                }}
               />
-              {item.name}
             </div>
           )
         })}
       </nav>
-      {/* <a className="flex flex-shrink-0 p-4" href="https://langgenius.ai/" target="_blank">
-        <Card><div className="flex flex-row items-center"><ChatBubbleOvalLeftEllipsisSolidIcon className="text-primary-600 h-6 w-6 mr-2" /><span>LangGenius</span></div></Card>
-      </a> */}
       <div className="flex flex-shrink-0 pr-4 pb-4 pl-4">
         <div className="text-gray-400 font-normal text-xs">© {copyRight} {(new Date()).getFullYear()}</div>
       </div>

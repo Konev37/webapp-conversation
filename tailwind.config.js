@@ -7,6 +7,10 @@ module.exports = {
   theme: {
     typography: require('./typography'),
     extend: {
+      fontSize: {
+        'xxs': '8px',     // 极小尺寸
+        'xxxs': '4px',     // 超小尺寸
+      },
       colors: {
         gray: {
           50: '#F9FAFB',
