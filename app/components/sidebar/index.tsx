@@ -1,10 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ChatBubbleOvalLeftEllipsisIcon,
   PencilSquareIcon,
-  TrashIcon, // 添加删除图标
+  TrashIcon,
 } from '@heroicons/react/24/outline'
 import { ChatBubbleOvalLeftEllipsisIcon as ChatBubbleOvalLeftEllipsisSolidIcon } from '@heroicons/react/24/solid'
 import Button from '@/app/components/base/button'
@@ -22,7 +22,7 @@ export type ISidebarProps = {
   currentId: string
   onCurrentIdChange: (id: string) => void
   list: ConversationItem[]
-  onDelete: (id: string) => void // 添加删除对话的回调函数
+  onDelete: (id: string) => void
 }
 
 const Sidebar: FC<ISidebarProps> = ({
@@ -33,9 +33,27 @@ const Sidebar: FC<ISidebarProps> = ({
   onDelete,
 }) => {
   const { t } = useTranslation()
+  // 添加状态来跟踪哪个对话正在等待确认删除
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+
+  // 处理删除点击事件
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation() // 阻止事件冒泡
+
+    if (confirmingDeleteId === id) {
+      // 如果已经在确认状态，执行真正的删除操作
+      onDelete(id)
+      setConfirmingDeleteId(null)
+    }
+    else {
+      // 首次点击，设置为确认状态
+      setConfirmingDeleteId(id)
+    }
+  }
+
   return (
     <div
-      className="shrink-0 flex flex-col overflow-y-auto bg-white pc:w-[244px] tablet:w-[192px] mobile:w-[240px]  border-r border-gray-200 tablet:h-[calc(100vh_-_3rem)] mobile:h-screen"
+      className="shrink-0 flex flex-col overflow-y-auto bg-white pc:w-[244px] tablet:w-[192px] mobile:w-[240px] border-r border-gray-200 tablet:h-[calc(100vh_-_3rem)] mobile:h-screen"
     >
       {list.length < MAX_CONVERSATION_LENTH && (
         <div className="flex flex-shrink-0 p-4 !pb-0">
@@ -52,6 +70,8 @@ const Sidebar: FC<ISidebarProps> = ({
           const isCurrent = item.id === currentId
           const ItemIcon
             = isCurrent ? ChatBubbleOvalLeftEllipsisSolidIcon : ChatBubbleOvalLeftEllipsisIcon
+          const isConfirmingDelete = confirmingDeleteId === item.id
+
           return (
             <div
               onClick={() => onCurrentIdChange(item.id)}
@@ -75,13 +95,22 @@ const Sidebar: FC<ISidebarProps> = ({
                 />
                 <span className="truncate">{item.name}</span>
               </div>
-              <TrashIcon
-                className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500"
-                onClick={(e) => {
-                  e.stopPropagation() // 阻止事件冒泡
-                  onDelete(item.id)
-                }}
-              />
+
+              {isConfirmingDelete ? (
+                // 显示确认删除按钮
+                <div
+                  className="bg-red-500 text-white px-2 py-1 rounded text-xs font-medium opacity-100"
+                  onClick={e => handleDeleteClick(item.id, e)}
+                >
+                  {t('app.common.confirmDelete')}
+                </div>
+              ) : (
+                // 显示正常的删除图标
+                <TrashIcon
+                  className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                  onClick={e => handleDeleteClick(item.id, e)}
+                />
+              )}
             </div>
           )
         })}
