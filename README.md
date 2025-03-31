@@ -63,7 +63,7 @@ docker run -p 3000:3000 <DOCKER_HUB_REPO>/webapp-conversation:latest
 
 ```
 docker build . -t fs/webapp-conversation:latest
-docker run --name next-robot --restart unless-stopped -p 3000:3000 fs/webapp-conversation:latest 
+docker run --name next-robot --restart always -p 3000:3000 fs/webapp-conversation:latest 
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
