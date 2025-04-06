@@ -479,7 +479,16 @@ const Main: FC<IMainProps> = () => {
 
         if (getConversationIdChangeBecauseOfNew()) {
           const { data: allConversations }: any = await fetchConversations()
-          const newItem: any = await generationConversationName(allConversations[0].id)
+
+          // 获取用户的第一条消息（也就是当前消息，因为这是新对话）
+          const userFirstMessage = message
+          // 截取前6个字符作为对话名称
+          const customName = userFirstMessage.length > 6
+            ? userFirstMessage.substring(0, 6)
+            : userFirstMessage
+
+          // 使用自定义名称调用重命名API
+          const newItem: any = await generationConversationName(allConversations[0].id, customName)
 
           const newAllConversations = produce(allConversations, (draft: any) => {
             draft[0].name = newItem.name
