@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import produce, { setAutoFreeze } from 'immer'
 import { useBoolean, useGetState } from 'ahooks'
-import useConversation from '@/hooks/use-conversation'
+import useConversation, { storageConversationIdKey } from '@/hooks/use-conversation'
 import Toast from '@/app/components/base/toast'
 import Sidebar from '@/app/components/sidebar'
 import ConfigSence from '@/app/components/config-scence'
@@ -235,6 +235,22 @@ const Main: FC<IMainProps> = () => {
       setAppUnavailable(true)
       return
     }
+
+    // 添加localStorage可用性检测代码
+    const isLocalStorageAvailable = () => {
+      try {
+        const testKey = '__storage_test__'
+        localStorage.setItem(testKey, testKey)
+        localStorage.removeItem(testKey)
+        return true
+      } catch (e) {
+        return false
+      }
+    }
+
+    const storageAvailable = isLocalStorageAvailable();
+    globalThis.console.log(`localStorage ${storageAvailable ? '可用' : '不可用'}，将使用内存状态管理`);
+
     (async () => {
       try {
         const [conversationData, appParams] = await Promise.all([fetchConversations(), fetchAppParams()])
@@ -478,25 +494,36 @@ const Main: FC<IMainProps> = () => {
           return
 
         if (getConversationIdChangeBecauseOfNew()) {
-          const { data: allConversations }: any = await fetchConversations()
+          try {
+            const { data: allConversations }: any = await fetchConversations()
 
-          // 获取用户的第一条消息（也就是当前消息，因为这是新对话）
-          const userFirstMessage = message
-          // 截取前6个字符作为对话名称
-          const customName = userFirstMessage.length > 6
-            ? userFirstMessage.substring(0, 6)
-            : userFirstMessage
+            // 添加检查确保数组有内容
+            if (allConversations && allConversations.length > 0) {
+              // 获取用户的第一条消息（也就是当前消息，因为这是新对话）
+              const userFirstMessage = message
+              // 截取前6个字符作为对话名称
+              const customName = userFirstMessage.length > 6
+                ? userFirstMessage.substring(0, 6)
+                : userFirstMessage
 
-          // 使用自定义名称调用重命名API
-          const newItem: any = await generationConversationName(allConversations[0].id, customName)
+              // 使用自定义名称调用重命名API
+              const newItem: any = await generationConversationName(allConversations[0].id, customName)
 
-          const newAllConversations = produce(allConversations, (draft: any) => {
-            draft[0].name = newItem.name
-          })
-          setConversationList(newAllConversations as any)
+              const newAllConversations = produce(allConversations, (draft: any) => {
+                draft[0].name = newItem.name
+              })
+              setConversationList(newAllConversations as any)
+            }
+            else {
+              console.log('未找到会话数据，无法重命名')
+            }
+          }
+          catch (error) {
+            console.error('重命名会话时出错:', error)
+          }
         }
 
-        // 添加这段代码：检查是否是第一次回复，如果是则刷新页面
+        // 检查是否是第一次回复，如果是则刷新页面
         const aiResponseCount = getChatList().filter(item => item.isAnswer === true && !item.isOpeningStatement).length
         if (isFirstResponse && aiResponseCount === 1 && !hasError) {
           setIsFirstResponse(false) // 重置状态，避免再次刷新

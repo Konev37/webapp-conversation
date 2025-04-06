@@ -45,7 +45,14 @@ export const fetchConversations = async () => {
 }
 
 export const fetchChatList = async (conversationId: string) => {
-  return get('messages', { params: { conversation_id: conversationId, limit: 20, last_id: '' } })
+  try {
+    return await get('messages', { params: { conversation_id: conversationId, limit: 20, last_id: '' } })
+  } catch (error: any) {
+    console.error('获取聊天列表失败:', error)
+
+    // 直接抛出异常，而不是静默处理
+    throw error
+  }
 }
 
 // init value. wait for server update

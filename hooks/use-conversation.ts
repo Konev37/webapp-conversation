@@ -3,27 +3,45 @@ import produce from 'immer'
 import { useGetState } from 'ahooks'
 import type { ConversationItem } from '@/types/app'
 
-const storageConversationIdKey = 'conversationIdInfo'
+export const storageConversationIdKey = 'conversationIdInfo'
 
 type ConversationInfoType = Omit<ConversationItem, 'inputs' | 'id'>
 function useConversation() {
   const [conversationList, setConversationList] = useState<ConversationItem[]>([])
   const [currConversationId, doSetCurrConversationId, getCurrConversationId] = useGetState<string>('-1')
+
+  // 添加内存存储备份
+  const memoryStorage = new Map()
+
   // when set conversation id, we do not have set appId
   const setCurrConversationId = (id: string, appId: string, isSetToLocalStroge = true, newConversationName = '') => {
     doSetCurrConversationId(id)
     if (isSetToLocalStroge && id !== '-1') {
-      // conversationIdInfo: {[appId1]: conversationId1, [appId2]: conversationId2}
-      const conversationIdInfo = globalThis.localStorage?.getItem(storageConversationIdKey) ? JSON.parse(globalThis.localStorage?.getItem(storageConversationIdKey) || '') : {}
-      conversationIdInfo[appId] = id
-      globalThis.localStorage?.setItem(storageConversationIdKey, JSON.stringify(conversationIdInfo))
+      try {
+        // 尝试使用localStorage
+        const conversationIdInfo = globalThis.localStorage?.getItem(storageConversationIdKey)
+          ? JSON.parse(globalThis.localStorage?.getItem(storageConversationIdKey) || '')
+          : {}
+        conversationIdInfo[appId] = id
+        globalThis.localStorage?.setItem(storageConversationIdKey, JSON.stringify(conversationIdInfo))
+      } catch (e) {
+        // localStorage失败，使用内存存储
+        console.warn('localStorage写入失败，使用内存存储', appId, id)
+        memoryStorage.set(appId, id)
+      }
     }
   }
 
   const getConversationIdFromStorage = (appId: string) => {
-    const conversationIdInfo = globalThis.localStorage?.getItem(storageConversationIdKey) ? JSON.parse(globalThis.localStorage?.getItem(storageConversationIdKey) || '') : {}
-    const id = conversationIdInfo[appId]
-    return id
+    try {
+      const conversationIdInfo = globalThis.localStorage?.getItem(storageConversationIdKey)
+        ? JSON.parse(globalThis.localStorage?.getItem(storageConversationIdKey) || '')
+        : {}
+      return conversationIdInfo[appId]
+    } catch (e) {
+      console.warn('无法访问localStorage，使用内存存储')
+      return memoryStorage.get(appId) || null // 返回null表示没有找到有效会话
+    }
   }
 
   const isNewConversation = currConversationId === '-1'
