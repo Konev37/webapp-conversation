@@ -22,7 +22,7 @@ const translation = {
   },
   errorMessage: {
     valueOfVarRequired: '变量值必填',
-    waitForResponse: '请等待上条信息响应完成',
+    waitForResponse: '请等待上条信息响应完成，若不想等待，可手动刷新页面',
   },
   variableTable: {
     optional: '可选',

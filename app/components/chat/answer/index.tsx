@@ -1,7 +1,7 @@
 'use client'
 import type { FC } from 'react'
-import React, { useState, useMemo } from 'react'
-import { HandThumbDownIcon, HandThumbUpIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import React, { useMemo, useState } from 'react'
+import { ChevronDownIcon, ChevronUpIcon, HandThumbDownIcon, HandThumbUpIcon } from '@heroicons/react/24/outline'
 import { useTranslation } from 'react-i18next'
 import LoadingAnim from '../loading-anim'
 import type { FeedbackFunc } from '../type'
@@ -14,7 +14,6 @@ import Tooltip from '@/app/components/base/tooltip'
 import WorkflowProcess from '@/app/components/workflow/workflow-process'
 import { Markdown } from '@/app/components/base/markdown'
 import type { Emoji } from '@/types/tools'
-
 
 // 解析思考内容的辅助函数
 const parseThinkingContent = (content: string) => {
@@ -30,10 +29,9 @@ const parseThinkingContent = (content: string) => {
   return {
     hasThinking: thinkingParts.length > 0,
     thinking: thinkingParts.join('\n\n'),
-    content: cleanContent
+    content: cleanContent,
   }
 }
-
 
 // 思考内容的可折叠组件
 const ThinkingContainer: FC<{ content: string }> = ({ content }) => {
@@ -57,7 +55,6 @@ const ThinkingContainer: FC<{ content: string }> = ({ content }) => {
     </div>
   )
 }
-
 
 const OperationBtn = ({ innerContent, onClick, className }: { innerContent: React.ReactNode; onClick?: () => void; className?: string }) => (
   <div
@@ -121,7 +118,8 @@ const Answer: FC<IAnswerProps> = ({
 
   // 使用 useMemo 解析内容，提取思考部分
   const parsedContent = useMemo(() => {
-    if (!content) return { hasThinking: false, thinking: '', content: '' }
+    if (!content)
+      return { hasThinking: false, thinking: '', content: '' }
     return parseThinkingContent(content)
   }, [content])
 
@@ -215,7 +213,7 @@ const Answer: FC<IAnswerProps> = ({
     </div>
   )
 
-  const [showWorkflow, setShowWorkflow] = useState(true);   // 是否显示工作流
+  const [showWorkflow, setShowWorkflow] = useState(true) // 是否显示工作流
 
   // Answer组件的return部分
   return (

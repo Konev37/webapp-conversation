@@ -57,6 +57,8 @@ const Main: FC<IMainProps> = () => {
     transfer_methods: [TransferMethod.local_file],
   })
 
+  const [isFirstResponse, setIsFirstResponse] = useState(true)
+
   useEffect(() => {
     if (APP_INFO?.title)
       document.title = `${APP_INFO.title} - Powered by Dify`
@@ -193,6 +195,9 @@ const Main: FC<IMainProps> = () => {
     // if new chat is already exist, do not create new chat
     if (conversationList.some(item => item.id === '-1'))
       return
+
+    // 重置首次回复标志
+    setIsFirstResponse(true)
 
     setConversationList(produce(conversationList, (draft) => {
       draft.unshift({
@@ -372,7 +377,7 @@ const Main: FC<IMainProps> = () => {
       notify({ type: 'success', message: t('common.api.success') })
     }
     catch (error) {
-      notify({ type: 'error', message: t('common.api.error') })
+      notify({ type: 'error', message: t('请刷新页面') })
     }
   }
 
@@ -481,6 +486,17 @@ const Main: FC<IMainProps> = () => {
           })
           setConversationList(newAllConversations as any)
         }
+
+        // 添加这段代码：检查是否是第一次回复，如果是则刷新页面
+        const aiResponseCount = getChatList().filter(item => item.isAnswer === true && !item.isOpeningStatement).length
+        if (isFirstResponse && aiResponseCount === 1 && !hasError) {
+          setIsFirstResponse(false) // 重置状态，避免再次刷新
+          setTimeout(() => {
+            window.location.reload()
+          }, 500) // 短暂延迟后刷新页面
+          return // 提前返回，避免执行后续代码
+        }
+
         setConversationIdChangeBecauseOfNew(false)
         resetNewConversationInputs()
         setChatNotStarted()
